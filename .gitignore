@@ -1,2 +1,3 @@
 *.exe
 alice.txt
+.DS_store
