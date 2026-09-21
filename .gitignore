@@ -1,3 +1,7 @@
+# Object files and executables
+*.o 
 *.exe
+
+# Miscellaneous
 alice.txt
 .DS_store
