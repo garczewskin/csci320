@@ -22,14 +22,19 @@ void insertQ(struct queueNode **q, struct queueNode *p)
     if (emptyQ(*q))
     {
         /* make p the one and only node in this queue */
+        *q = p;
+        p->next = p;
     }
     else
     {
         /*
             insert p at the tail, and it becomes the new tail
             This is a circular queue, so the tail must point to head, i.e.
-            (*q)->next must always be the front of the queue 
+            (*q)->next must always be the front of the queue
         */
+        p->next = (*q)->next;
+        (*q)->next = p;
+        *q = p;
     }
 }
 
@@ -48,6 +53,17 @@ struct queueNode *removeQ(struct queueNode **q)
     {
         /* disconnect the head node from the queue, update the tail,
         return the head */
+        struct queueNode *x = (*q)->next;
+        if(x == *q) {
+            (*q) = NULL;
+        }
+        else {
+            (*q)->next = x->next;
+        }
+        x->next = NULL;
+
+        return x;
+        
     }
     return NULL;
 }
