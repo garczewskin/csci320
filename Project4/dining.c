@@ -77,9 +77,14 @@ void *philosopher3(void *arg) {         // table semaphore, right then left
     int p = (int)(long long)arg;
     while (1) {
         think(p);
-        // TODO
+        Zem_wait(&table);
+        Zem_wait(&forks[right(p)]);
+        usleep(gap_us[p]);
+        Zem_wait(&forks[left(p)]);        
         eat(p);
-        // TODO
+        Zem_post(&forks[left(p)]);
+        Zem_post(&forks[right(p)]);
+        Zem_post(&table);    
     }
 }
 
