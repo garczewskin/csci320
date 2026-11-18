@@ -1,9 +1,10 @@
 // Build: gcc -pthread -o dining dining.c
-// Run:   ./dining <N 3..20> <algorithm 1..4>
+// Run:   ./dining <N 3..20> <algorithm 1..4> [think_us eat_us gap_us slow_list rogue_right]
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "common.h"
 #include "common_threads.h"
@@ -11,7 +12,7 @@
 
 #define MAX_N 20
 
-int N, algo, rogue = 0;
+int N, algo, rogue = 0, rogue_right = 0;
 int think_us[MAX_N], eat_us[MAX_N], gap_us[MAX_N];
 long eat_count[MAX_N];
 
@@ -69,18 +70,27 @@ void *philosopher4(void *arg) {         // rogue takes any free fork first
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) { fprintf(stderr, "usage: %s N algorithm\n", argv[0]); return 1; }
+    if (argc < 3) { fprintf(stderr, "usage: %s N algorithm [think_us eat_us gap_us slow_list rogue_right]\n", argv[0]); return 1; }
     N = atoi(argv[1]);
     algo = atoi(argv[2]);
     if (N < 3 || N > MAX_N || algo < 1 || algo > 4) { fprintf(stderr, "bad args\n"); return 1; }
 
+    int think_arg = argc > 3 ? atoi(argv[3]) : 1000;    // think time for everyone
+    int eat_arg   = argc > 4 ? atoi(argv[4]) : 1000;    // eat time (staggered by philosopher)
+    int gap_arg   = argc > 5 ? atoi(argv[5]) : 0;       // pause between the two forks
+    char *slow    = argc > 6 ? argv[6] : "";            // e.g. 0,4 : these philosophers think 1 s
+    rogue_right   = argc > 7 ? atoi(argv[7]) : 0;       // Alg 4 tie-break: 1 = rogue prefers right
+
     for (int i = 0; i < N; i++) {
-        think_us[i] = eat_us[i] = 1000;
-        gap_us[i] = 0;
+        think_us[i] = think_arg;
+        eat_us[i] = eat_arg + 1000 * i;
+        gap_us[i] = gap_arg;
         fork_free[i] = 1;
         Zem_init(&forks[i], 1);
         Zem_init(&self[i], 0);
     }
+    for (char *tok = strtok(slow, ","); tok; tok = strtok(NULL, ","))
+        think_us[atoi(tok)] = 1000000;
     Zem_init(&table, N - 1);
     Zem_init(&state_lock, 1);
 
