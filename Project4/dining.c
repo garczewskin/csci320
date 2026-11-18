@@ -42,13 +42,34 @@ void *philosopher1(void *arg) {         // left, then right
     }
 }
 
+int both_free(int p) { return fork_free[left(p)] && fork_free[right(p)]; }
+void take(int p)     { fork_free[left(p)] = fork_free[right(p)] = 0; }
 void *philosopher2(void *arg) {         // both forks or neither
     int p = (int)(long long)arg;
     while (1) {
         think(p);
-        // TODO
-        eat(p);
-        // TODO
+        Zem_wait(&state_lock);
+        if (both_free(p)) {
+            take(p);
+            Zem_post(&state_lock);
+        } else {
+            is_waiting[p] = 1;
+            Zem_post(&state_lock);
+            Zem_wait(&self[p]);
+        }        
+        eat(p);    
+        Zem_wait(&state_lock);
+        fork_free[left(p)] = fork_free[right(p)] = 1;
+        int nb[2] = { (p + N - 1) % N, (p + 1) % N };
+        for (int i = 0; i < 2; i++) {
+            int q = nb[i];
+            if (is_waiting[q] && both_free(q)) {
+                take(q);
+                is_waiting[q] = 0;
+                Zem_post(&self[q]);
+            }
+        }
+        Zem_post(&state_lock);
     }
 }
 
