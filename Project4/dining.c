@@ -33,9 +33,12 @@ void *philosopher1(void *arg) {         // left, then right
     int p = (int)(long long)arg;
     while (1) {
         think(p);
-        // TODO
+        Zem_wait(&forks[left(p)]);
+        usleep(gap_us[p]);
+        Zem_wait(&forks[right(p)]);
         eat(p);
-        // TODO
+        Zem_post(&forks[left(p)]);
+        Zem_post(&forks[right(p)]);
     }
 }
 
