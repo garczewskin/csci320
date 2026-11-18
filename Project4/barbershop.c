@@ -14,12 +14,13 @@
 #define MAX_BARBERS 8
 
 int n_chairs, num_barbers, num_customers;
+int cut_us = 200000, cuts = 0, balks = 0;
 Zem_t mutex;            // protects shared state
 Zem_t customers;        // barbers sleep here; customers post once seated
 
 // Part 2: one barber, shared rendezvous semaphores
 int waiting = 0;
-Zem_t barber_ready, cut_done;
+Zem_t barber_ready, cut_done, customer_left;
 
 void *barber_simple(void *arg) {
     while (1) {
@@ -71,6 +72,7 @@ int main(int argc, char *argv[]) {
     Zem_init(&customers, 0);
     Zem_init(&barber_ready, 0);
     Zem_init(&cut_done, 0);
+    Zem_init(&customer_left, 0);
     for (int i = 0; i < num_customers; i++) {
         Zem_init(&ready[i], 0);
         Zem_init(&done[i], 0);
@@ -87,5 +89,6 @@ int main(int argc, char *argv[]) {
     }
 
     sleep(30);
+    printf("haircuts: %d, balks: %d\n", cuts, balks);
     exit(0);
 }
