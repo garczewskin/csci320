@@ -1,6 +1,7 @@
 # Object files and executables
 *.o 
 *.exe
+*.log
 
 # Miscellaneous
 alice.txt
