@@ -24,5 +24,8 @@ This repository contains selected work for CSCI 320: Operating Systems
 - See [this repository](https://github.com/garczewskin/csci320-xv6) for this work.
 
 **Project 4: Concurrency**
-- In-progress
+- Implement four algorithms for the dining philosophers problem
+- Implement two variations of the barbershop problem
+- Builds on starter code provided by the instructor
+- See [RESULTS.md](Project4/RESULTS.md) for further explanation of this work.
 
