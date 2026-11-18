@@ -88,13 +88,26 @@ void *philosopher3(void *arg) {         // table semaphore, right then left
     }
 }
 
+void set_free(int f, int v) { Zem_wait(&state_lock); fork_free[f] = v; Zem_post(&state_lock); }
+void grab(int f) { Zem_wait(&forks[f]); set_free(f, 0); }
+void drop(int f) { set_free(f, 1); Zem_post(&forks[f]); }
 void *philosopher4(void *arg) {         // rogue takes any free fork first
     int p = (int)(long long)arg;
     while (1) {
         think(p);
-        // TODO
+        int first = left(p), second = right(p);
+        if (p == rogue) {
+            Zem_wait(&state_lock);
+            int l = fork_free[left(p)], r = fork_free[right(p)];
+            if (rogue_right ? (r || !l) : (!l && r)) { first = right(p); second = left(p); }
+            Zem_post(&state_lock);
+        }
+        grab(first);
+        usleep(gap_us[p]);
+        grab(second);
         eat(p);
-        // TODO
+        drop(first);
+        drop(second);
     }
 }
 
