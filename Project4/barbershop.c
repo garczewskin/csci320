@@ -24,14 +24,39 @@ Zem_t barber_ready, cut_done, customer_left;
 
 void *barber_simple(void *arg) {
     while (1) {
-        // TODO
+        Zem_wait(&customers);
+        Zem_wait(&mutex); waiting--; Zem_post(&mutex);
+        Zem_post(&barber_ready);
+        printf("barber: cutting\n");
+        usleep(cut_us);
+        printf("barber: finished\n");
+        Zem_post(&cut_done);
+        Zem_wait(&customer_left);
     }
 }
 
 void *customer_simple(void *arg) {
     int id = (int)(long long)arg;
+    unsigned seed = id;
     while (1) {
-        // TODO
+        usleep(200000 + rand_r(&seed) % 800000);
+        Zem_wait(&mutex);
+        if (waiting == n_chairs) {
+            balks++;
+            Zem_post(&mutex);
+            printf("customer %d: shop full, leaves\n", id);
+            continue;
+        }
+        waiting++;
+        printf("customer %d: sits (%d waiting)\n", id, waiting);
+        Zem_post(&mutex);
+        Zem_post(&customers);
+        Zem_wait(&barber_ready);
+        printf("customer %d: getting haircut\n", id);
+        Zem_wait(&cut_done);
+        printf("customer %d: leaves with haircut\n", id);
+        Zem_wait(&mutex); cuts++; Zem_post(&mutex);
+        Zem_post(&customer_left);
     }
 }
 
