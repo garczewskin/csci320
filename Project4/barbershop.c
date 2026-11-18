@@ -64,20 +64,53 @@ void *customer_simple(void *arg) {
 int queue[MAX_CUSTOMERS], q_head = 0, q_tail = 0, q_count = 0;
 Zem_t ready[MAX_CUSTOMERS], done[MAX_CUSTOMERS];
 
-int queue_push(int id) { /* TODO: 1 on success, 0 if full */ return 0; }
-int queue_pop(void)    { /* TODO */ return -1; }
+int queue_push(int id) {
+    if (q_count == n_chairs) return 0;
+    queue[q_tail] = id;
+    q_tail = (q_tail + 1) % MAX_CUSTOMERS;
+    q_count++;
+    return 1;
+}
+int queue_pop(void) {
+    int id = queue[q_head];
+    q_head = (q_head + 1) % MAX_CUSTOMERS;
+    q_count--;
+    return id;
+}
 
 void *barber_multi(void *arg) {
     int b = (int)(long long)arg;
     while (1) {
-        // TODO
+        Zem_wait(&customers);
+        Zem_wait(&mutex); int id = queue_pop(); Zem_post(&mutex);
+        Zem_post(&ready[id]);
+        printf("barber %d: cutting customer %d\n", b, id);
+        usleep(cut_us);
+        printf("barber %d: finished customer %d\n", b, id);
+        Zem_post(&done[id]);
     }
 }
 
 void *customer_multi(void *arg) {
     int id = (int)(long long)arg;
+    unsigned seed = id;
     while (1) {
-        // TODO
+        usleep(200000 + rand_r(&seed) % 800000);
+        Zem_wait(&mutex);
+        if (!queue_push(id)) {
+            balks++;
+            Zem_post(&mutex);
+            printf("customer %d: shop full, leaves\n", id);
+            continue;
+        }
+        printf("customer %d: sits\n", id);
+        Zem_post(&mutex);
+        Zem_post(&customers);
+        Zem_wait(&ready[id]);
+        printf("customer %d: getting haircut\n", id);
+        Zem_wait(&done[id]);
+        printf("customer %d: leaves with haircut\n", id);
+        Zem_wait(&mutex); cuts++; Zem_post(&mutex);
     }
 }
 
